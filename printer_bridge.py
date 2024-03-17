@@ -1,23 +1,23 @@
 import tkinter as tk
 from tkinter import ttk
-import cups
+import win32print
+import win32api
+import tempfile
 
 def get_printers():
-    conn = cups.Connection()
-    printers = conn.getPrinters()
-    return list(printers.keys())
+    printers = [printer[2] for printer in win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL)]
+    return printers
 
 def print_test_receipt(printer_name):
-    conn = cups.Connection()
     # Preparing a simple text file to print
-    filename = "/tmp/test_receipt.txt"
+    filename = tempfile.mktemp(suffix=".txt")
     with open(filename, "w") as f:
         f.write("***** POS RECEIPT *****\n\n")
         f.write("Item A: $5.00\n")
         f.write("Item B: $3.50\n")
         f.write("\nThank You!\n")
     # Printing the file
-    conn.printFile(printer_name, filename, "Test POS Receipt", {})
+    win32api.ShellExecute(0, "print", filename, f'/d:"{printer_name}"', ".", 0)
 
 def on_print_button():
     selected_printer = printer_combo.get()
@@ -25,7 +25,7 @@ def on_print_button():
     print(f"Sent a test receipt to {selected_printer}")
 
 app = tk.Tk()
-app.title("Printer Bridge with PyCUPS")
+app.title("Printer Bridge with win32print")
 app.geometry("400x200")
 
 # Dropdown menu for printer selection
