@@ -1,3 +1,4 @@
+import ctypes
 import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import socketserver
@@ -7,6 +8,15 @@ from tkinter import ttk
 import win32print
 import win32api
 import tempfile
+
+# Make the application DPI aware to improve appearance on high DPI displays
+def make_app_dpi_aware():
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)  # 1: System DPI aware, 2: Per monitor DPI aware
+    except (AttributeError, Exception):
+        pass  # This will fail on non-Windows systems or Windows versions without this support
+
+make_app_dpi_aware()  # Call the function to make app DPI aware
 
 def get_printers():
     printers = [printer[2] for printer in win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL)]
@@ -28,9 +38,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             data = json.loads(post_data.decode())
             printer_name = printer_combo.get()  # Ensure you've selected a printer in the GUI
 
-            # Make sure to check both 'action' is present and its value is 'print'
             if 'action' in data and data['action'] == 'print':
-                # Use get to provide a default receipt text if 'text' key is missing
                 receipt_text = data.get('text', 'Default Receipt Text')
                 print_test_receipt(printer_name, receipt_text)
                 self.send_response(200)
@@ -59,8 +67,6 @@ printer_label.pack(pady=5)
 
 printer_combo = ttk.Combobox(app, values=get_printers())
 printer_combo.pack(pady=5)
-
-# No need for a print button in this version since printing is triggered by HTTP requests
 
 # Start the server in a separate thread to keep the GUI responsive
 server_thread = threading.Thread(target=run_server)
