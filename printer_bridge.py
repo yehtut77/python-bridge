@@ -22,12 +22,44 @@ def get_printers():
     printers = [printer[2] for printer in win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL)]
     return printers
 
+def generate_receipt_text():
+    # Header
+    receipt_text = "Invoice No: INV240100001\n"
+    receipt_text += "Customer Name: Sender Name\n"
+    receipt_text += "Phone: Sender Phone\n"
+    receipt_text += "\n"  # Spacer
+    
+    # Item list (Simplified for demonstration. Expand based on actual requirements.)
+    items = [
+        {"id": "HST2401000001", "name": "Ye Htut Khaung", "phone": "Receiver Phone", "price": "165000"},
+        {"id": "HST2401000002", "name": "Pyae Phyo Minn", "phone": "Receiver Phone", "price": "300000"},
+        {"id": "HST2401000003", "name": "Yee Yee Lwin", "phone": "Receiver Phone", "price": "20000"},
+        {"id": "HST2401000004", "name": "U Zaw Naing", "phone": "Receiver Phone", "price": "142000"},
+        {"id": "HST2401000005", "name": "Ei Ei Khin", "phone": "Receiver Phone", "price": "300000"},
+        {"id": "HST2401000006", "name": "Thant Sin Aung", "phone": "Receiver Phone", "price": "400000"},
+    ]
+    
+    for item in items:
+        receipt_text += f'{item["id"]}\t{item["name"]}\t{item["phone"]}\t{item["price"]}\n'
+    
+    # Footer
+    receipt_text += "\nNet Total:    1461000\n"
+    receipt_text += "Total Item:   8\n"
+    receipt_text += "\nPrinted by: Staff Name\n"
+    receipt_text += "\nAll right reserved by;\n"
+    receipt_text += "www.hs-cargo.com\n"
+    # Include additional footer text as required
+    
+    return receipt_text
+
 def print_test_receipt(printer_name, receipt_text):
+    # Assuming you have already chosen a printer through the GUI
     filename = tempfile.mktemp(suffix=".txt")
     with open(filename, "w") as f:
-        f.write(receipt_text)
+        f.write(generate_receipt_text())  # Use the generated receipt text
     # Printing the file
     win32api.ShellExecute(0, "print", filename, f'/d:"{printer_name}"', ".", 0)
+
 
 class RequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -39,7 +71,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             printer_name = printer_combo.get()  # Ensure you've selected a printer in the GUI
 
             if 'action' in data and data['action'] == 'print':
-                receipt_text = data.get('text', 'Default Receipt Text')
+                receipt_text = generate_receipt_text()
                 print_test_receipt(printer_name, receipt_text)
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')
