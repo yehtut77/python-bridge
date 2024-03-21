@@ -1,7 +1,6 @@
 import ctypes
 import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import socketserver
 import threading
 import tkinter as tk
 from tkinter import ttk
@@ -24,7 +23,10 @@ def get_printers():
 
 def generate_receipt_text():
     # Header
-    receipt_text = "Invoice No: INV240100001\n"
+    receipt_text = "\t\tHS CARGO\n"
+    receipt_text += "\t Thailand - Myanmar CARGO\n"
+    receipt_text += "\tထိုင်း - မြန်မာ ကုန်စည် အမြန်ပို့ဆောင်ရေး\n"
+    receipt_text += "Invoice No: INV240100001\n"
     receipt_text += "Customer Name: Sender Name\n"
     receipt_text += "Phone: Sender Phone\n"
     receipt_text += "\n"  # Spacer
@@ -40,14 +42,14 @@ def generate_receipt_text():
     ]
     
     for item in items:
-        receipt_text += f'{item["id"]}\t{item["name"]}\t{item["phone"]}\t{item["price"]}\n'
+        receipt_text += f'{item["id"]}\t{item["name"]}\t{item["price"]}\n\t\t{item["phone"]}\n'
     
     # Footer
     receipt_text += "\nNet Total:    1461000\n"
     receipt_text += "Total Item:   8\n"
     receipt_text += "\nPrinted by: Staff Name\n"
-    receipt_text += "\nAll right reserved by;\n"
-    receipt_text += "www.hs-cargo.com\n"
+    receipt_text += "\n\tAll right reserved by;\n"
+    receipt_text += "\twww.hs-cargo.com\n"
     # Include additional footer text as required
     
     return receipt_text
@@ -55,7 +57,7 @@ def generate_receipt_text():
 def print_test_receipt(printer_name, receipt_text):
     # Assuming you have already chosen a printer through the GUI
     filename = tempfile.mktemp(suffix=".txt")
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding="utf-8") as f:
         f.write(generate_receipt_text())  # Use the generated receipt text
     # Printing the file
     win32api.ShellExecute(0, "print", filename, f'/d:"{printer_name}"', ".", 0)
@@ -68,7 +70,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         
         try:
             data = json.loads(post_data.decode())
-            printer_name = printer_combo.get()  # Ensure you've selected a printer in the GUI
+            printer_name = data.get('printer_name')  # Get printer name from POST data
 
             if 'action' in data and data['action'] == 'print':
                 receipt_text = generate_receipt_text()
@@ -91,7 +93,7 @@ def run_server(server_class=HTTPServer, handler_class=RequestHandler, port=8080)
 
 # GUI Setup
 app = tk.Tk()
-app.title("Printer Bridge with win32print and HTTP Server")
+app.title("Bifrost Bridge")
 app.geometry("400x200")
 
 printer_label = ttk.Label(app, text="Select Printer:")
